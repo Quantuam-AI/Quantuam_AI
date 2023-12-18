@@ -1,11 +1,13 @@
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, classification_report, confusion_matrix
+import matplotlib.pyplot as plt
 import os
 
 # 이미지 데이터 경로 설정
-train_data_dir = 'Quantuam_AI/trainData'
-validation_data_dir = 'Quantuam_AI/validationData'
+train_data_dir = 'C:/Users/SEC/OneDrive/바탕 화면/종합프로젝트/Quantuam_AI/trainData'
+validation_data_dir = 'C:/Users/SEC/OneDrive/바탕 화면/종합프로젝트/Quantuam_AI/validationData'
 
 for class_folder in os.listdir(train_data_dir):
     class_path = os.path.join(train_data_dir, class_folder)
@@ -64,16 +66,58 @@ model.add(Dense(1, activation='sigmoid'))
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
 # 모델 훈련
+
+
 history = model.fit(
     train_generator,
     epochs=epochs,
     validation_data=validation_generator
 )
 
-# 모델 평가
-score = model.evaluate(validation_generator)
-print(f'Test Loss: {score[0]}, Test Accuracy: {score[1]}')
+# 테스트 데이터에 대한 예측
+y_pred = model.predict(validation_generator)
+y_pred = (y_pred > 0.5).astype(int)  # 이진 분류일 경우, 임계값을 0.5로 설정
 
-# 훈련 및 검증 손실, 정확도 출력
-print("Training History:")
-print(history.history)
+# 실제 레이블
+y_true = validation_generator.classes
+
+# 추가적인 성능 지표 계산
+accuracy = accuracy_score(y_true, y_pred)
+precision = precision_score(y_true, y_pred)
+recall = recall_score(y_true, y_pred)
+f1 = f1_score(y_true, y_pred)
+conf_matrix = confusion_matrix(y_true, y_pred)
+
+# 출력
+print(f'Accuracy: {accuracy}')
+print(f'Precision: {precision}')
+print(f'Recall: {recall}')
+print(f'F1 Score: {f1}')
+print('Confusion Matrix:')
+print(conf_matrix)
+print('Classification Report:')
+print(classification_report(y_true, y_pred))
+
+# 손실과 정확도 그래프로 표시
+plt.figure(figsize=(12, 4))
+
+# 훈련 및 검증 손실
+plt.subplot(1, 2, 1)
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Training and Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+# 훈련 및 검증 정확도
+plt.subplot(1, 2, 2)
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Training and Validation Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
